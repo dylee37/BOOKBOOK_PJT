@@ -2,9 +2,12 @@
 from rest_framework import generics
 from rest_framework.permissions import AllowAny
 from rest_framework.authtoken.views import ObtainAuthToken
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.authtoken.models import Token
+from rest_framework import status
 from .serializers import UserSignupSerializer, AuthTokenCustomSerializer
+from .models import CustomUser
 
 class UserSignupView(generics.CreateAPIView):
     """
@@ -36,3 +39,26 @@ class UserLoginView(ObtainAuthToken):
             'user_name': user.name, 
             'email': user.email
         })
+
+class AccountDeleteView(generics.DestroyAPIView):
+    """
+    인증된 사용자의 계정을 삭제하는 API View (DELETE 요청만 허용).
+    """
+    # 인증된 사용자만 접근 가능
+    permission_classes = [IsAuthenticated]
+    
+    # CustomUser 모델을 사용
+    queryset = CustomUser.objects.all()
+
+    def get_object(self):
+        # 요청을 보낸 인증된 사용자(request.user) 객체를 반환
+        return self.request.user
+
+    def destroy(self, request, *args, **kwargs):
+        instance = self.get_object()
+        
+        # 실제 사용자 계정 삭제
+        self.perform_destroy(instance)
+        
+        # 204 No Content 응답 (성공적으로 삭제되었으나 응답 본문은 없음)
+        return Response(status=status.HTTP_204_NO_CONTENT)

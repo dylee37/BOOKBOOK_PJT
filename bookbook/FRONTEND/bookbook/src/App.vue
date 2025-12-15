@@ -104,6 +104,7 @@ const showSignupPage = ref(false);
 const showMyPage = ref(false);
 const showAddCommentDialog = ref(false);
 const userName = ref("독서 애호가");
+const userToken = ref(null);
 
 const stats = {
   booksRead: 24,
@@ -293,6 +294,8 @@ const handleLogin = async ({ email, password }) => {
 
     const userData = await response.json();
 
+    userToken.value = userData.token;
+
     const loggedInUserName = userData.user_name;
 
     isLoggedIn.value = true;
@@ -378,10 +381,49 @@ const handleLogout = () => {
   showMyPage.value = false;
 };
 
-const handleDeleteAccount = () => {
-  isLoggedIn.value = false;
-  showMyPage.value = false;
-  alert("회원 탈퇴가 완료되었습니다.");
+// const handleDeleteAccount = () => {
+//   isLoggedIn.value = false;
+//   showMyPage.value = false;
+//   alert("회원 탈퇴가 완료되었습니다.");
+// };
+
+const handleDeleteAccount = async () => {
+    if (!confirm('정말로 계정을 탈퇴하시겠습니까? 이 작업은 되돌릴 수 없습니다.')) {
+        return;
+    }
+    if (!userToken.value) {
+        alert('인증 정보가 없습니다. 다시 로그인 해주세요.');
+        isLoggedIn.value = false;
+        showMyPage.value = false;
+        return;
+    }
+
+    const API_URL = 'http://127.0.0.1:8000/api/v1/user/delete/'; 
+
+    try {
+        const response = await fetch(API_URL, {
+            method: 'DELETE',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Token ${userToken.value}`, 
+            },
+        });
+
+        if (response.status === 204) {
+            isLoggedIn.value = false;
+            userToken.value = null;
+            showMyPage.value = false;
+            alert('회원 탈퇴가 완료되었습니다.');
+        } else {
+            const errorData = await response.json();
+            let errorMessage = errorData.detail || '계정 탈퇴에 실패했습니다.';
+            throw new Error(errorMessage);
+        }
+
+    } catch (error) {
+        console.error('탈퇴 API 호출 오류:', error);
+        alert(`계정 탈퇴 중 오류가 발생했습니다: ${error.message}`);
+    }
 };
 
 const handleUpdateProfile = (name) => {
