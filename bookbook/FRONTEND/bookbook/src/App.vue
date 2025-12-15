@@ -460,7 +460,7 @@ const handleDeleteAccount = async () => {
   }
 };
 
-const handleUpdateProfile = async (name) => {
+const handleUpdateProfile = async (data) => {
   if (!userToken.value) {
     alert("인증 정보가 없습니다. 다시 로그인 해주세요.");
     return false;
@@ -475,24 +475,34 @@ const handleUpdateProfile = async (name) => {
         "Content-Type": "application/json",
         Authorization: `Token ${userToken.value}`,
       },
-      body: JSON.stringify({
-        nickname: name,
-      }),
+      body: JSON.stringify(data),
     });
 
     if (!response.ok) {
       const errorData = await response.json();
       const errorMessage =
-        errorData.nickname?.[0] || "닉네임 업데이트에 실패했습니다.";
+        errorData.nickname?.[0] ||
+        errorData.selected_voice?.[0] ||
+        "프로필 업데이트에 실패했습니다.";
       throw new Error(errorMessage);
     }
 
     const updatedProfile = await response.json();
 
     // 로컬 상태 업데이트
-    userName.value = updatedProfile.nickname;
+    if (updatedProfile.nickname) {
+      userName.value = updatedProfile.nickname;
+    }
     if (userProfile.value) {
-      userProfile.value.name = updatedProfile.nickname;
+      // userProfile.value 객체에 최신 데이터를 병합
+      Object.assign(userProfile.value, updatedProfile);
+    }
+    
+    // 변경된 필드에 따라 다른 알림 표시
+    if (data.nickname) {
+      alert("닉네임이 변경되었습니다.");
+    } else if (data.selected_voice) {
+      alert("목소리가 변경되었습니다.");
     }
 
     return true; // 성공 반환
