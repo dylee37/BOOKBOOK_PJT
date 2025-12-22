@@ -28,7 +28,7 @@
       <LibraryPage v-else-if="activeTab === 'library'" :books="isLoggedIn ? libraryBooks : []" :isLoggedIn="isLoggedIn"
         @bookClick="handleBookClick" @loginClick="showLoginPage = true" />
       <ProfilePage v-else-if="activeTab === 'profile'" :userName="userName" :stats="stats" :isLoggedIn="isLoggedIn"
-        :userData="userData" @loginClick="showLoginPage = true" @myPageClick="handleMyPageClick" />
+        :userData="userData" @loginClick="showLoginPage = true" @myPageClick="handleMyPageClick" @updateBio="handleUpdateBio"/>
       <SearchDialog :isOpen="isSearchOpen" :books="books" @close="isSearchOpen = false" @bookClick="handleBookClick" />
 
       <BottomNavigation :activeTab="activeTab" @tabChange="activeTab = $event" />
@@ -477,6 +477,20 @@ const handleUpdateProfile = async (data) => {
     console.error("프로필 업데이트 API 오류:", error);
     alert(`오류: ${error.message}`);
     return false; // 실패 반환
+  }
+};
+
+const handleUpdateBio = async (newBio) => {
+  // 백엔드 API에 bio 필드를 PATCH 요청 보냄
+  // 기존 handleUpdateProfile 함수가 { bio: "내용" } 객체를 인자로 받음
+  const success = await handleUpdateProfile({ bio: newBio });
+  
+  if (success) {
+    // 서버 저장에 성공하면 로컬 화면 데이터도 즉시 업데이트
+    if (userData.value) {
+      userData.value.bio = newBio;
+    }
+    // alert("소개가 업데이트되었습니다."); // handleUpdateProfile 내부에 이미 alert 로직이 있다면 생략 가능
   }
 };
 

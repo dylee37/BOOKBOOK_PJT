@@ -88,6 +88,9 @@ def user_me(request):
         'id': user.id,
         'email': user.email,
         'name': user.name,  # 프론트엔드에서 userName.value = response.data.name; 로 사용 중
+        'bio': user.bio,  # 추가
+        'favorite_book': user.favorite_book,  # 추가
+        'selected_category': user.selected_category,  # 추가
         'stats': stats_data,
         # ... 필요한 다른 사용자 정보 추가
     }
