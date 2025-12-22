@@ -17,6 +17,7 @@ export default createStore({
     userInfo: JSON.parse(localStorage.getItem('user_info')) || null, // 사용자 정보
     // ⭐️ 3. 사용자 선택 TTS 목소리 ⭐️
     selectedVoice: localStorage.getItem('selected_voice') || 'alloy',
+    myLibrary: [],
   },
   
   getters: {
@@ -66,6 +67,9 @@ export default createStore({
       state.selectedVoice = voiceId
       localStorage.setItem('selected_voice', voiceId)
     },
+    SET_MY_LIBRARY(state, books) {
+    state.myLibrary = books;
+    }, 
   },
 
   actions: {
@@ -101,6 +105,48 @@ export default createStore({
       } catch (error) {
         console.error('Error fetching recommendations:', error)
         commit('SET_PERSONALIZED_RECOMMENDATIONS', [])
+      }
+    },
+    async fetchMyLibrary({ commit, state }) {
+      try {
+        const token = state.accessToken || localStorage.getItem('authToken');
+        console.log("보내는 토큰:", token); // 1. 토큰 확인
+        
+        if (!token) {
+          console.error("토큰이 없습니다!");
+          return;
+        }
+
+        // 💡 주소 뒤에 슬래시(/)가 빠지면 Django에서 에러가 날 수 있습니다.
+        const response = await axios.get(`${API_URL}/v1/user/library/`, {
+          headers: {
+            // ⭐️ 'Token' 뒤에 한 칸 띄우고 토큰값이 와야 합니다.
+            Authorization: `Token ${token}` 
+          }
+        });
+        
+        console.log("서버 응답 데이터:", response.data); // 2. 데이터 확인
+        commit('SET_MY_LIBRARY', response.data);
+      } catch (error) {
+        console.error("서재 목록 fetch 중 에러:", error.response || error); // 3. 에러 상세 확인
+      }
+    },
+    async fetchUserInfo({ commit, state }) {
+    try {
+      const token = state.accessToken || localStorage.getItem('authToken');
+      if (!token) return;
+
+      const response = await axios.get('http://127.0.0.1:8000/api/v1/user/me/', {
+        headers: {
+          Authorization: `Token ${token}`
+        }
+      });
+
+      console.log("최신 유저 정보 업데이트:", response.data);
+      // SET_USER_INFO 뮤테이션이 이미 있다면 그대로 사용하면 됩니다.
+      commit('SET_USER_INFO', response.data);
+      } catch (error) {
+        console.error("유저 정보 업데이트 실패:", error);
       }
     },
   },

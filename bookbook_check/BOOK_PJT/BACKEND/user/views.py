@@ -1,21 +1,23 @@
 # user/views.py
 from rest_framework import generics, status
+from rest_framework.authentication import TokenAuthentication
+from rest_framework.authtoken.models import Token
+from rest_framework.authtoken.views import ObtainAuthToken
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import AllowAny, IsAuthenticated
-from rest_framework.authtoken.views import ObtainAuthToken
 from rest_framework.response import Response
-from rest_framework.authtoken.models import Token
-from .serializers import UserSignupSerializer, AuthTokenCustomSerializer, CustomUserSerializer
-
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from rest_framework_simplejwt.views import TokenObtainPairView
+from rest_framework.views import APIView 
+from django.db.models import Avg, Count
+
+from .serializers import UserSignupSerializer, AuthTokenCustomSerializer, CustomUserSerializer, UserProfileUpdateSerializer
 
 from books.utils import get_llm_recommendation 
-from books.models import Book
-from books.serializers import BookListSerializer # 책 정보 직렬화용
-from .serializers import UserProfileUpdateSerializer
+from books.models import Book, Library, Comment
+from books.serializers import BookListSerializer
+
 from .models import CustomUser
-from rest_framework.views import APIView 
 import json
 import logging
 logger = logging.getLogger(__name__)
@@ -77,19 +79,31 @@ class CustomTokenObtainPairView(TokenObtainPairView):
 def user_me(request):
     user = request.user
     
-    # ⭐️⭐️ 임시 통계 데이터 (나중에 실제 DB에서 가져와야 함) ⭐️⭐️
+    # 1. 읽은 책 권 수
+    books_read = Library.objects.filter(user=user).count()
+    
+    # 2. 작성한 댓글 개수
+    comments_count = Comment.objects.filter(user=user).count()
+    
+    # 3. 평균 평점 (내가 작성한 모든 댓글의 평점 평균)
+    avg_rating_data = Comment.objects.filter(user=user).aggregate(Avg('rating'))
+    average_rating = avg_rating_data['rating__avg'] or 0.0
+    
+    # 0.5 단위 등으로 깔끔하게 보이게 하고 싶다면 round 사용
+    average_rating = round(average_rating, 1)
+    
     stats_data = {
-        'books_read': 0, # 현재는 0으로 고정
-        'comments_count': 0, # 현재는 0으로 고정
-        'average_rating': 0.0, # 현재는 0.0으로 고정
+        'books_read': books_read,
+        'comments_count': comments_count,
+        'average_rating': average_rating,
     }
     
     data = {
         'id': user.id,
         'email': user.email,
-        'name': user.name,  # 프론트엔드에서 userName.value = response.data.name; 로 사용 중
+        'name': user.name,
         'stats': stats_data,
-        # ... 필요한 다른 사용자 정보 추가
+        'selected_voice': user.selected_voice,
     }
     return Response(data)
 
@@ -226,3 +240,17 @@ class UserProfileUpdateView(generics.RetrieveUpdateAPIView):
         # partial=True 설정으로 부분 업데이트 허용 (예: name만 보낼 수 있음)
         kwargs['partial'] = True 
         return super().update(request, *args, **kwargs)
+    
+
+
+
+class UserLibraryView(APIView):
+    # 명시적으로 TokenAuthentication 설정
+    authentication_classes = [TokenAuthentication] 
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        qs = Library.objects.filter(user=request.user).select_related('book')
+        books = [item.book for item in qs]
+        serializer = BookListSerializer(books, many=True)
+        return Response(serializer.data)
