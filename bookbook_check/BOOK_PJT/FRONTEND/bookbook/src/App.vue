@@ -1,5 +1,6 @@
 <template>
   <div class="min-h-screen bg-background">
+    <OnboardingPage v-if="showOnboarding" @finish="handleFinishOnboarding" />
     <MyPage v-if="showMyPage" :userName="userName" :profileData="userProfile" @back="showMyPage = false" @logout="handleLogout"
       @deleteAccount="handleDeleteAccount" @updateProfile="handleUpdateProfile" />
 
@@ -56,6 +57,7 @@ import MyPage from './components/MyPage.vue';
 import BottomNavigation from './components/BottomNavigation.vue';
 import SearchDialog from './components/SearchDialog.vue';
 import AddCommentDialog from './components/AddCommentDialog.vue';
+import OnboardingPage from './components/OnboardingPage.vue';
 
 import axios from 'axios'
 
@@ -73,6 +75,7 @@ const userName = ref('복복');
 const libraryBooks = ref([]); 
 const books = ref([]);
 const userProfile = ref(null);
+const showOnboarding = ref(false);
 
 const store = useStore()
 
@@ -529,11 +532,18 @@ const handleShowLogin = () => {
 // onMounted 수정: 토큰이 있을 경우 데이터 로드 시도
 onMounted(() => {
   const token = localStorage.getItem('authToken');
+  const hasSeenOnboarding = localStorage.getItem('hasSeenOnboarding');
   if (token) {
     isLoggedIn.value = true; 
     fetchUserData();
     fetchLibraryBooks();
+  }else if (!hasSeenOnboarding) {
+    showOnboarding.value = true;
   }
   fetchBooks();
 });
+const handleFinishOnboarding = () => {
+  showOnboarding.value = false;
+  localStorage.setItem('hasSeenOnboarding', 'true'); 
+};
 </script>
