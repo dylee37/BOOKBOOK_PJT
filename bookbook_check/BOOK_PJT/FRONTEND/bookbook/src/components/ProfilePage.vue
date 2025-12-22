@@ -69,7 +69,8 @@
             </div>
             <span class="text-[#333333]">읽은 책</span>
           </div>
-          <span class="text-[#333333] font-medium">{{ stats.booksRead }}권</span>
+
+          <span class="text-[#333333]">{{ userInfo.stats.books_read }}권</span>
         </div>
         <div class="flex items-center justify-between py-3 border-b border-[#E0E0E0]">
           <div class="flex items-center gap-3">
@@ -80,7 +81,8 @@
             </div>
             <span class="text-[#333333]">작성한 댓글</span>
           </div>
-          <span class="text-[#333333] font-medium">{{ stats.comments }}개</span>
+
+          <span class="text-[#333333]">{{ userInfo.stats.comments_count }}개</span>
         </div>
         <div class="flex items-center justify-between py-3">
           <div class="flex items-center gap-3">
@@ -91,7 +93,8 @@
             </div>
             <span class="text-[#333333]">평균 평점</span>
           </div>
-          <span class="text-[#333333] font-medium">{{ stats.averageRating.toFixed(1) }}점</span>
+
+          <span class="text-[#333333]">{{ userInfo.stats.average_rating }}점</span>
         </div>
       </div>
 
@@ -143,7 +146,17 @@
 </template>
 
 <script setup>
-import { ref, watch } from 'vue';
+import { computed, onMounted, ref, watch } from 'vue';
+import { useStore } from 'vuex';
+
+const store = useStore();
+const userInfo = computed(() => store.getters.currentUser);
+
+// 페이지 마운트 시 최신 정보를 가져오도록 호출 (선택 사항)
+onMounted(() => {
+  // 만약 user/me 정보를 새로고침하는 action이 있다면 호출해주세요.
+  store.dispatch('fetchUserInfo');
+});
 
 const props = defineProps({
   userName: String,

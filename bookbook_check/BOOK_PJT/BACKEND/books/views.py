@@ -1,7 +1,7 @@
 import random
 from rest_framework import generics, status, permissions
 from django.conf import settings
-from .models import Book, Comment
+from .models import Book, Comment, Library
 from .serializers import BookListSerializer, BookDetailSerializer
 from rest_framework.permissions import IsAuthenticatedOrReadOnly
 from rest_framework.views import APIView
@@ -77,21 +77,16 @@ class RecommendedBooksView(APIView):
                     'similarity': similarity
                 })
 
-        # 3. 유사도 점수 기준으로 정렬 및 상위 N개 선택
+        # 3. 유사도 점수 기준으로 정렬 및 상위 10개 선택
         # 코사인 유사도 점수가 높은 순서(내림차순)로 정렬
         similarities.sort(key=lambda x: x['similarity'], reverse=True)
-        
-        # 상위 10개 추천 도서 선택 (N=10)
         recommended_items = similarities[:10]
         
-        # 4. 결과 시리얼라이즈 및 반환
         recommended_books = [item['book'] for item in recommended_items]
-        
-        # 임베딩 결과를 시각적으로 표현하기 어려워 다이어그램 생략 
+ 
         serializer = BookListSerializer(recommended_books, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
     
-
 
 
 class BestsellerListView(APIView):
@@ -100,8 +95,8 @@ class BestsellerListView(APIView):
     URL: GET /api/books/bestsellers/
     """
     def get(self, request, format=None):
-        # is_bestseller 필드가 True인 책만 필터링 (최대 20권)
-        # 1. 일단 DB 확인
+        # is_bestseller 필드가 True인 책만 필터링
+        # 1. DB 확인
         bestsellers = Book.objects.filter(is_bestseller=True)[:20]
 
         # 2. 비어있다면?
@@ -136,9 +131,6 @@ class BestsellerListView(APIView):
                 except Exception as e:
                     print(f"JSON 파싱 에러: {e}")
 
-
-        
-        # 목록 형태로 시리얼라이즈
         serializer = BookListSerializer(bestsellers, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
     
@@ -146,7 +138,7 @@ class BestsellerListView(APIView):
 
 
 
-User = get_user_model() # Django 기본 User 모델을 가져옵니다.
+User = get_user_model()
 
 
 class RecommendationView(APIView):
@@ -154,21 +146,16 @@ class RecommendationView(APIView):
     permission_classes = [permissions.AllowAny]
 
     def get(self, request, format=None):
-        # ⭐️ 1. 인증 확인 및 디버깅 (터미널에서 확인용)
-        print(f"DEBUG: 현재 접속 유저 -> {request.user}")
 
         if request.user.is_authenticated:
             user = request.user
             
-            # ⭐️ 2. 유저의 카테고리에 맞는 후보 도서 20권 추출
             candidate_books = Book.objects.filter(category__name=user.selected_category).order_by('?')[:20]
             
-            # 카테고리에 책이 너무 적으면 전체에서 가져옴
             if not candidate_books.exists() or candidate_books.count() < 5:
                 print(f"DEBUG: {user.selected_category} 카테고리에 책이 부족하여 전체 도서에서 추출합니다.")
                 candidate_books = Book.objects.all().order_by('?')[:20]
 
-            # GPT에게 보낼 리스트 문자열 생성
             books_list_str = "\n".join([
                 f"ID:{b.id}, 제목:{b.title}, 저자:{b.author}, 카테고리:{b.category.name if b.category else '미지정'}" 
                 for b in candidate_books
@@ -180,7 +167,6 @@ class RecommendationView(APIView):
                 "favorite_book": user.favorite_book or "특정 책 없음"
             }
 
-            # ⭐️ 3. 프롬프트에 [후보 목록] 삽입
             prompt = f"""
                 당신은 도서 추천 전문가입니다. 아래 [후보 목록] 중에서 사용자의 취향에 가장 잘 맞는 책 2권을 선정하세요.
 
@@ -200,7 +186,6 @@ class RecommendationView(APIView):
                 {{ "recommendations": [ {{"book_id": ID, "reason": "추천사"}}, ... ] }}
             """
 
-            # LLM 호출 및 결과 처리
             llm_response_json = get_llm_recommendation(prompt)
             
             if not llm_response_json:
@@ -224,11 +209,10 @@ class RecommendationView(APIView):
                             "book": book_data,
                             "reason": item.get('reason', "추천 이유가 없습니다.")
                         })
-                
-                # 만약 LLM이 2권을 추천하지 않았을 경우를 대비하여 랜덤 베스트셀러로 채움
+
                 while len(final_recommendations) < 2:
                     bestsellers = list(Book.objects.filter(is_bestseller=True))
-                    if not bestsellers: break # 베스트셀러가 없으면 중단
+                    if not bestsellers: break 
                     
                     random_book = random.choice(bestsellers)
                     if not any(rec['book']['id'] == random_book.id for rec in final_recommendations):
@@ -249,12 +233,10 @@ class RecommendationView(APIView):
             if len(bestsellers) >= 2:
                 random_books = random.sample(bestsellers, 2)
             else:
-                # 베스트셀러가 2권 미만일 경우, 있는 만큼만 반환
                 random_books = bestsellers
 
             serializer = BookListSerializer(random_books, many=True)
-            
-            # 로그아웃 유저를 위한 추천 이유 추가
+
             final_data = []
             for book_data in serializer.data:
                 final_data.append({
@@ -266,20 +248,31 @@ class RecommendationView(APIView):
 
 class CommentCreateView(generics.CreateAPIView):
     """
-    특정 도서에 대한 댓글을 등록합니다.
-    URL: POST /api/books/<int:book_pk>/comments/
-    # ⭐️ URL에서 책 ID를 'book_pk'로 받도록 통일 권장 ⭐️
+    댓글을 작성하면 자동으로 서재(Library)에 등록되는 뷰
     """
     serializer_class = CommentSerializer
-    permission_classes = [permissions.IsAuthenticated] 
+    permission_classes = [permissions.IsAuthenticated]
 
     def perform_create(self, serializer):
-        book_id = self.kwargs.get('book_pk') # URLconf에서 book_pk를 사용하도록 변경 가정
-        book = get_object_or_404(Book, pk=book_id)
+        book_pk = self.kwargs.get('book_pk')
+        book = get_object_or_404(Book, pk=book_pk)
+        
+        # 1. 댓글 저장
         serializer.save(user=self.request.user, book=book)
+        
+        # 2. 서재 등록 시 디버깅 정보 출력
+        print(f"--- 서재 등록 시도 ---")
+        print(f"유저: {self.request.user} (ID: {self.request.user.id})")
+        print(f"도서: {book.title}")
+
+        # 3. 유저와 도서를 연결하여 서재(Library)에 저장
+        obj, created = Library.objects.get_or_create(
+            user=self.request.user,
+            book=book
+        )
+        print(f"등록 결과: {'새로 생성됨' if created else '이미 존재함'}")
 
 
-# ⭐️⭐️ [최종 수정] 댓글 삭제 View: 'book_pk'와 'pk' 충돌 해결 ⭐️⭐️
 class CommentDestroyView(generics.DestroyAPIView):
     """
     특정 도서에 속한 댓글을 삭제합니다.
@@ -289,8 +282,8 @@ class CommentDestroyView(generics.DestroyAPIView):
     serializer_class = CommentSerializer 
     permission_classes = [permissions.IsAuthenticated]
 
-    # DRF가 URL에서 댓글 ID를 찾을 때 사용할 인자 이름을 'pk'로 설정합니다.
-    # 즉, URL의 마지막 <int:pk>는 댓글 ID가 됩니다. (기본값)
+    # DRF가 URL에서 댓글 ID를 찾을 때 사용할 인자 이름을 'pk'로 설정
+    # URL의 마지막 <int:pk>는 댓글 ID
     lookup_url_kwarg = 'pk' 
 
     def get_object(self):
@@ -302,7 +295,7 @@ class CommentDestroyView(generics.DestroyAPIView):
         comment = get_object_or_404(
             Comment, 
             pk=comment_pk, 
-            book__pk=book_pk # 해당 책에 속하는지 검증
+            book__pk=book_pk
         )
         
         # 3. 권한 확인 (본인이 작성한 댓글만 삭제 가능)
@@ -310,6 +303,24 @@ class CommentDestroyView(generics.DestroyAPIView):
             raise PermissionDenied("자신이 작성한 댓글만 삭제할 수 있습니다.")
             
         return comment
+
+    def perform_destroy(self, instance):
+        user = self.request.user
+        book = instance.book
+        
+        # 1. 댓글 삭제
+        instance.delete()
+        print(f"--- 댓글 삭제 완료 (유저: {user}, 도서: {book.title}) ---")
+
+        # 2. 해당 유저가 이 책에 남긴 다른 댓글이 더 있는지 확인
+        remaining_comments = Comment.objects.filter(user=user, book=book).exists()
+
+        # 3. 더 이상 남은 댓글이 없다면 서재에서도 삭제
+        if not remaining_comments:
+            Library.objects.filter(user=user, book=book).delete()
+            print(f"--- 서재에서도 삭제 완료: {book.title} ---")
+        else:
+            print(f"--- 아직 다른 댓글이 남아있어 서재에 유지합니다 ---")
     
 
 class TextToSpeechView(APIView):
@@ -351,7 +362,7 @@ class TextToSpeechView(APIView):
                 "response_format": "mp3"
             }
 
-            # ⭐️ 라이브러리 대신 직접 POST 요청 ⭐️
+            # 라이브러리 대신 직접 POST 요청
             response = requests.post(gms_url, headers=headers, json=payload)
 
             if response.status_code == 200:
@@ -396,3 +407,5 @@ class SpeechToTextView(APIView):
         except Exception as e:
             print(f"STT ERROR: {str(e)}")
             return Response({"error": f"음성 변환 중 오류 발생: {str(e)}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        
+
