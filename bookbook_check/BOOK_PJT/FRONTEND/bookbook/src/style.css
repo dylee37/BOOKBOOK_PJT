@@ -2,8 +2,15 @@
 @tailwind components;
 @tailwind utilities;
 
+@font-face {
+    font-family: 'LeeSeoyun';
+    src: url('https://fastly.jsdelivr.net/gh/projectnoonnu/noonfonts_2202-2@1.0/LeeSeoyun.woff') format('woff');
+    font-weight: normal;
+    font-style: normal;
+  }
+
 :root {
-  font-family: 'ptd', '맑은 고딕', 'Malgun Gothic', Helvetica, AppleSDGothicNeo, sans-serif;
+  font-family: 'LeeSeoyun', '맑은 고딕', 'Malgun Gothic', Helvetica, AppleSDGothicNeo, sans-serif;
   line-height: 1.5;
   font-weight: 400;
   

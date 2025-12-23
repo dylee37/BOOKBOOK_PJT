@@ -38,16 +38,16 @@
         <h2 class="text-[#333333] mb-1 font-bold text-lg">{{ userName }}</h2>
         
         <div class="w-full text-center px-4 mt-2">
-          <div v-if="!isEditingBio" @click="startEditBio" class="cursor-pointer group">
-            <p class="text-[#666666] italic text-sm">
+          <div v-if="!isEditingBio" @click="startEditBio" class="cursor-pointer group relative inline-block">
+            <p class="text-[#666666] italic text-sm px-8">
               {{ userData?.bio || '한 줄 소개가 없습니다. 클릭하여 추가해보세요.' }}
-              <span class="ml-1 opacity-0 group-hover:opacity-100 text-xs text-blue-500">수정</span>
             </p>
+            <span class="absolute right-0 top-0 opacity-0 group-hover:opacity-100 text-xs text-blue-500 transition-opacity">수정</span>
           </div>
           <div v-else class="flex flex-col items-center gap-2">
             <input 
               v-model="editBioText" 
-              class="w-full max-w-xs border-b border-[#f4f2e5] text-center text-sm py-1 focus:outline-none focus:border-[#e8e6d9]"
+              class="w-full max-w-[280px] border-b border-[#f4f2e5] text-center text-sm py-1 focus:outline-none focus:border-[#e8e6d9] bg-transparent"
               placeholder="자신을 소개해주세요"
               @keyup.enter="saveBio"
             />
