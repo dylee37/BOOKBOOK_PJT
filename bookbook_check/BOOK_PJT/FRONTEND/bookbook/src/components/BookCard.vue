@@ -47,7 +47,6 @@
 <script setup>
 import { ref, computed, watch } from 'vue';
 import StarRating from './StarRating.vue';
-// import dummy from '../assets/ex_img.jpeg'
 
 const props = defineProps({
   book: {
@@ -57,26 +56,16 @@ const props = defineProps({
 });
 
 defineEmits(['click']);
-// ⭐️ 별점 계산 로직 (0으로 기본값 설정) ⭐️
-// ⭐️⭐️ computedRating 수정: 오직 사용자 TOKTOK 평균 평점만 반영 ⭐️⭐️
 const computedRating = computed(() => {
-    // 1. TOKTOK 사용자 평균 평점 필드(예: user_average_rating)를 사용합니다.
-    // 이 필드는 10점 만점 기준으로 백엔드에서 계산되어 온다고 가정합니다.
     const userRating = props.book.rating; 
     
-    // 2. 평점 값이 null 또는 undefined가 아니라면 해당 값을 사용합니다.
     if (userRating != null) {
         return userRating;
     }
-
-    // 3. 사용자 평균 평점 데이터가 없다면 0으로 처리합니다. (알라딘 평점 사용 안 함)
     return 0;
 });
 
-// ⭐️ 댓글 수 계산 로직 (0으로 기본값 설정) ⭐️
 const computedCommentCount = computed(() => {
-  // book.comment_count가 있으면 사용하고, 없으면 book.comments 배열의 길이를 사용합니다.
-  // 두 필드 모두 없으면 최종적으로 0을 반환합니다.
   return props.book.comment_count || (props.book.comments ? props.book.comments.length : 0);
 });
 </script>

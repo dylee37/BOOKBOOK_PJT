@@ -153,7 +153,6 @@ const handleAddComment = () => {
   showAddCommentDialog.value = true;
 };
 
-// 헬퍼 함수: 평균 평점 계산 (5점 만점 기준)
 function calculateLocalAverage(comments) {
   if (!comments || comments.length === 0) return 0;
   const validComments = comments.filter(c => c.rating != null && c.rating > 0);
@@ -210,7 +209,6 @@ const handleSubmitComment = async ({ text, isVoice, rating, voice_choice }) => {
 
     const bookIndex = books.value.findIndex(book => book.id === selectedBook.value.id);
     if (bookIndex !== -1) {
-      // 10점 만점 기준으로 저장 (책 목록 평점 표기 기준)
       books.value[bookIndex] = {
         ...books.value[bookIndex],
         rating: newAverageRating,
@@ -241,7 +239,6 @@ const handleSubmitComment = async ({ text, isVoice, rating, voice_choice }) => {
 const fetchUserProfile = async () => {
   const token = localStorage.getItem('authToken');
   if (!token) {
-    // 토큰 없으면 로딩 불가
     return;
   }
 
@@ -249,7 +246,7 @@ const fetchUserProfile = async () => {
 
   try {
     const response = await fetch(API_URL, {
-      method: "GET", // GET 요청으로 프로필 조회
+      method: "GET", // 프로필 조회
       headers: {
         Authorization: `Token ${token}`,
       },
@@ -257,8 +254,8 @@ const fetchUserProfile = async () => {
 
     if (response.ok) {
       const data = await response.json();
-      userProfile.value = data; // 🚨 프로필 데이터 저장
-      // 닉네임도 최신 정보로 업데이트
+      userProfile.value = data;
+
       userName.value = data.nickname;
     } else {
       console.error("프로필 로드 실패:", response.status);
@@ -409,7 +406,7 @@ const handleDeleteComment = async (commentId) => {
     if (bookIndex !== -1) {
       books.value[bookIndex] = {
         ...books.value[bookIndex],
-        rating: newAverageRating, // 10점 만점 기준으로 저장
+        rating: newAverageRating,
         commentCount: newCommentCount
       };
     }
@@ -419,15 +416,6 @@ const handleDeleteComment = async (commentId) => {
     alert('댓글 삭제에 실패했습니다. (권한 없음 또는 서버 오류)');
   }
 };
-
-
-// const handleUpdateProfile = (newNickname) => {
-//   if (userData.value) {
-//     userData.value.nickname = newNickname; 
-//   }
-//   userName.value = newNickname;
-//   alert(`닉네임이 ${newNickname}(으)로 변경되었습니다.`);
-// };
 
 const handleUpdateProfile = async (data) => {
   const token = localStorage.getItem('authToken');
@@ -459,41 +447,34 @@ const handleUpdateProfile = async (data) => {
 
     const updatedProfile = await response.json();
 
-    // 로컬 상태 업데이트
     if (updatedProfile.nickname) {
       userName.value = updatedProfile.nickname;
     }
     if (userProfile.value) {
-      // userProfile.value 객체에 최신 데이터를 병합
       Object.assign(userProfile.value, updatedProfile);
     }
-    
-    // 변경된 필드에 따라 다른 알림 표시
+
     if (data.nickname) {
       alert("닉네임이 변경되었습니다.");
     } else if (data.selected_voice) {
       alert("목소리가 변경되었습니다.");
     }
 
-    return true; // 성공 반환
+    return true;
   } catch (error) {
     console.error("프로필 업데이트 API 오류:", error);
     alert(`오류: ${error.message}`);
-    return false; // 실패 반환
+    return false;
   }
 };
 
 const handleUpdateBio = async (newBio) => {
-  // 백엔드 API에 bio 필드를 PATCH 요청 보냄
-  // 기존 handleUpdateProfile 함수가 { bio: "내용" } 객체를 인자로 받음
   const success = await handleUpdateProfile({ bio: newBio });
   
   if (success) {
-    // 서버 저장에 성공하면 로컬 화면 데이터도 즉시 업데이트
     if (userData.value) {
       userData.value.bio = newBio;
     }
-    // alert("소개가 업데이트되었습니다."); // handleUpdateProfile 내부에 이미 alert 로직이 있다면 생략 가능
   }
 };
 
@@ -508,11 +489,9 @@ const handleMyPageClick = async () => {
 };
 
 const handleUpdateProfileField = async (fieldData) => {
-  // fieldData는 { favorite_book: '...' } 또는 { selected_category: '...' } 형태
   const success = await handleUpdateProfile(fieldData);
   
   if (success && userData.value) {
-    // 성공 시 로컬의 userData를 갱신
     Object.assign(userData.value, fieldData);
     alert("정보가 성공적으로 변경되었습니다.");
   }
@@ -529,7 +508,6 @@ const handleShowLogin = () => {
 };
 
 
-// onMounted 수정: 토큰이 있을 경우 데이터 로드 시도
 onMounted(() => {
   const token = localStorage.getItem('authToken');
   const hasSeenOnboarding = localStorage.getItem('hasSeenOnboarding');

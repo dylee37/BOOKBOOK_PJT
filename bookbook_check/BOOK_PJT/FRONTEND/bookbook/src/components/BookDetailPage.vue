@@ -109,27 +109,19 @@ const props = defineProps({
   }
 });
 
-// ⭐️⭐️ 수정된 부분: Vuex Store 인스턴스를 가져와 appStore 변수에 할당 ⭐️⭐️
 const store = useStore();
 
-// ⭐️⭐️ 수정된 currentUserId computed 속성 ⭐️⭐️
 const currentUserId = computed(() => {
-  // Vuex Store의 state.userInfo 객체에서 id를 가져오거나, 없으면 null을 반환합니다.
-  // userInfo는 객체이므로 (옵셔널 체이닝)을 사용하여 안전하게 접근
-  // 만약 백엔드가 'pk' 필드를 사용한다면: store.state.userInfo?.pk
-  // 현재는 'id' 필드가 있다고 가정합니다.
   return store.state.userInfo?.id || null;
 });
 
 const emit = defineEmits(['back', 'addComment', 'loginClick', 'deleteComment']); 
 
-// ⭐️⭐️ 추가 2: VoiceComment에서 받은 이벤트를 App.vue로 전달하는 함수 ⭐️⭐️
 const handleDeleteComment = (commentId) => {
-    // 댓글 ID를 받아서 상위 컴포넌트(App.vue)로 전달
     emit('deleteComment', commentId);
 };
 
-// ⭐️⭐️ 1. 이미지 로직 추가 (BookCard.vue와 동일) ⭐️⭐️
+// 이미지 로직 추가
 const currentCoverUrl = ref(props.book.cover);
 const DEFAULT_COVER = dummy;
 
@@ -142,71 +134,49 @@ const handleImageError = () => {
 watch(() => props.book.cover, (newCover) => {
   currentCoverUrl.value = newCover;
 }, { immediate: true });
-// ⭐️⭐️ -------------------------------------------- ⭐️⭐️
 
 
-// ⭐️⭐️ 1. displayComments computed 속성 수정 (날짜 기준 정렬 추가) ⭐️⭐️
 const displayComments = computed(() => {
-  // comments prop을 created_at (ISO String) 기준으로 내림차순 정렬합니다.
-  // .slice()를 사용하여 원본 배열을 복사한 후 정렬해야 Vue의 반응성이 깨지지 않습니다.
   return props.comments.slice().sort((a, b) => {
-    // ISO string을 Date 객체로 변환하여 비교합니다. (가장 최신 댓글이 위로)
     return new Date(a.created_at) - new Date(b.created_at);
   });
 });
 
 const computedRating = computed(() => {
-  // 1. TOKTOK 댓글 목록에서 평점(5점 만점)을 가진 댓글만 필터링합니다.
   const validComments = props.comments.filter(c => c.rating != null && c.rating > 0);
 
   if (validComments.length === 0) {
-    // 2. 댓글이 없으면, 평점은 0으로 처리합니다. (알라딘 평점 사용 안 함)
-    return 0; // StarRating 컴포넌트가 10점 만점 기준으로 작동하므로 0을 반환합니다.
+    return 0;
   }
 
-  // 3. 댓글이 있으면, 댓글 평점(5점 만점)의 평균을 계산합니다.
   const sumRating = validComments.reduce((sum, comment) => sum + comment.rating, 0);
   const average5Point = sumRating / validComments.length;
-
-  // 4. StarRating 컴포넌트가 10점 만점을 기준으로 표시하므로, 2배로 변환하여 전달합니다.
   return average5Point * 2;
 });
 
-
-
-// ⭐️⭐️ 1. StarRating 컴포넌트에 전달할 평점 (10점 만점, 소수점 유지) ⭐️⭐️
 const computedRatingForStars = computed(() => {
-    // TOKTOK 댓글 목록에서 평점(10점 만점)을 가진 댓글만 필터링합니다.
     const validComments = props.comments.filter(c => c.rating != null && c.rating > 0);
     
     if (validComments.length === 0) {
         return 0;
     }
-
-    // 10점 만점 평점의 평균을 계산
     const sumRating = validComments.reduce((sum, comment) => sum + comment.rating, 0);
     const average10Point = sumRating / validComments.length;
-    
-    // StarRating 컴포넌트가 필요로 하는 10점 만점의 정확한 평균값(9.75)을 반환
+
     return average10Point;
 });
 
-
-// ⭐️⭐️ 2. 표기용 평점 (소수점 둘째 자리에서 반올림, 9.8 표기용) ⭐️⭐️
 const displayedAverageScore = computed(() => {
     const average = computedRatingForStars.value; // 9.75
     
     if (average === 0) {
         return 0.0;
     }
-    
-    // 소수점 둘째 자리에서 반올림하여 첫째 자리까지 표기 (toFixed(1)은 반올림 기능 포함)
+
     return average.toFixed(1); // 9.75 -> 9.8
 });
 
-
-// ⭐️ 3. 댓글 수 계산 (displayComments.value.length 사용)
 const computedCommentCount = computed(() => {
-  return displayComments.value.length; // ⭐️ 정의된 computed 속성을 사용
+  return displayComments.value.length;
 });
 </script>
