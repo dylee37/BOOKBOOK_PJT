@@ -6,8 +6,6 @@
            
            transition-all duration-[1000ms] cubic-bezier(0.175, 0.885, 0.32, 1.1)
            will-change-transform
-           
-           hover:scale-[1.08] 
            hover:-translate-y-4
 
            hover:shadow-[0_40px_60px_-15px_rgba(0,0,0,0.12),0_20px_20px_-10px_rgba(0,0,0,0.08)]
@@ -16,7 +14,7 @@
     
     <div class="aspect-[3/4] bg-[#f4f2e5] relative overflow-hidden">
       <img :src="book.cover" :alt="book.title" v-if="book.cover" 
-           class="w-full h-full object-cover transition-transform duration-[1200ms] ease-out hover:scale-110" />
+           class="w-full h-full object-cover transition-transform duration-[1200ms] ease-out" />
       <div v-else class="w-full h-full"></div>
     </div>
 

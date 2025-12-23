@@ -5,7 +5,7 @@
       <div class="max-w-lg mx-auto px-4 py-4">
         <div class="flex items-center justify-between">
           <div>
-            <h1 class="text-[#333333]" style="font-size: 1.8rem; font-weight: bold">BOOKBOOK</h1>
+            <h1 class="text-[#333333]" style="font-size: 1.8rem;">BOOKBOOK</h1>
           </div>
           <button @click="$emit('searchClick')" class="p-2 hover:bg-[#FAFAFA] rounded-full transition-colors">
             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
@@ -21,7 +21,7 @@
 
     <main class="max-w-lg mx-auto px-4 py-6">
       <div class="mb-6">
-        <h2 class="text-[#333333] mb-4" style="font-weight: 700">이번 주 베스트셀러</h2>
+        <h2 class="text-[#333333] mb-4" style="font-size: 1.5rem;font-weight: 700">이번 주 베스트셀러</h2>
         <div v-if="bestsellers.length" class="grid grid-cols-2 gap-4">
           <BookCard v-for="book in bestsellers" :key="book.id" :book="book"
             @click="$emit('bookClick', book)" />
@@ -32,7 +32,7 @@
       </div>
 
       <div>
-        <h2 class="text-[#333333] mb-4" style="font-weight: 700">
+        <h2 class="text-[#333333] mb-4" style="font-weight: 700; font-size: 1.5rem;">
           {{ isLoggedIn ? `${currentUser.name}님을 위한 AI 맞춤 추천 도서` : '추천 도서' }}
         </h2>
         

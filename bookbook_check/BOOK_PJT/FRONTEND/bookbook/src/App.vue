@@ -1,27 +1,44 @@
 <template>
   <div class="min-h-screen bg-background">
+    
     <OnboardingPage v-if="showOnboarding" @finish="handleFinishOnboarding" />
-    <MyPage v-if="showMyPage" :userName="userName" :profileData="userProfile" @back="showMyPage = false" @logout="handleLogout"
-      @deleteAccount="handleDeleteAccount" @updateProfile="handleUpdateProfile" />
 
-    <SignupPage v-else-if="showSignupPage" @signup="handleSignup" @close="showSignupPage = false"
-      @loginClick="handleShowLogin" />
-
-    <LoginPage v-else-if="showLoginPage" @login="handleLogin" @close="showLoginPage = false"
-      @signupClick="handleShowSignup" />
+    <template v-else-if="showMyPage || showSignupPage || showLoginPage">
+      <MyPage 
+        v-if="showMyPage" 
+        :userName="userName" 
+        :profileData="userProfile" 
+        @back="showMyPage = false" 
+        @logout="handleLogout"
+        @deleteAccount="handleDeleteAccount" 
+        @updateProfile="handleUpdateProfile" 
+      />
+      <SignupPage 
+        v-else-if="showSignupPage" 
+        @signup="handleSignup" 
+        @close="showSignupPage = false"
+        @loginClick="handleShowLogin" 
+      />
+      <LoginPage 
+        v-else-if="showLoginPage" 
+        @login="handleLogin" 
+        @close="showLoginPage = false"
+        @signupClick="handleShowSignup" 
+      />
+    </template>
 
     <template v-else-if="selectedBook">
       <BookDetailPage 
         :book="selectedBook" 
         :comments="selectedBook.comments || []" 
         :isLoggedIn="isLoggedIn"
-        :currentUserId="userData?.id" @back="selectedBook = null" 
+        :currentUserId="userData?.id" 
+        @back="selectedBook = null" 
         @addComment="handleAddComment" 
         @loginClick="showLoginPage = true"
         @deleteComment="handleDeleteComment" 
       />
-      <AddCommentDialog :isOpen="showAddCommentDialog" @close="showAddCommentDialog = false"
-        @submit="handleSubmitComment" />
+      <AddCommentDialog :isOpen="showAddCommentDialog" @close="showAddCommentDialog = false" @submit="handleSubmitComment" />
     </template>
 
     <template v-else>
@@ -30,16 +47,12 @@
         @bookClick="handleBookClick" @loginClick="showLoginPage = true" />
       <ProfilePage v-else-if="activeTab === 'profile'" :userName="userName" :stats="stats" :isLoggedIn="isLoggedIn"
         :userData="userData" @loginClick="showLoginPage = true" @myPageClick="handleMyPageClick" @updateBio="handleUpdateBio" @updateProfileField="handleUpdateProfileField"/>
-      <SearchDialog :isOpen="isSearchOpen" :books="books" @close="isSearchOpen = false" @bookClick="handleBookClick" />
-
+      
       <BottomNavigation :activeTab="activeTab" @tabChange="activeTab = $event" />
-      <SearchDialog
-        :isOpen="isSearchOpen"
-        :books="books || []"
-        @close="isSearchOpen = false"
-        @bookClick="handleBookClick"
-      />
+      
+      <SearchDialog :isOpen="isSearchOpen" :books="books" @close="isSearchOpen = false" @bookClick="handleBookClick" />
     </template>
+
   </div>
 </template>
 
@@ -280,15 +293,16 @@ const handleLogin = async (email, password) => {
     const token = response.data.token;
     localStorage.setItem('authToken', token);
 
-    isLoggedIn.value = true;
-    showLoginPage.value = false;
-    activeTab.value = 'home';
-
+    
     await Promise.all([
       fetchUserData(), 
       fetchLibraryBooks() 
     ]);
-
+    
+    isLoggedIn.value = true;
+    showLoginPage.value = false;
+    activeTab.value = 'home';
+    
     alert(`로그인 성공! ${userName.value}님 환영합니다.`);
 
   } catch (error) {

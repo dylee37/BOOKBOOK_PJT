@@ -10,7 +10,10 @@ export default {
         background: '#FAFAFA',
       },
       fontFamily: {
-        sans: ['ptd', '맑은 고딕', 'Malgun Gothic', 'Helvetica', 'AppleSDGothicNeo', 'sans-serif'],
+        sans: ['LeeSeoyun', 'sans-serif'],
+      },
+      colors: {
+        background: '#FAF9F6',
       },
     },
   },
