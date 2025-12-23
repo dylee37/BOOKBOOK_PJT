@@ -18,7 +18,7 @@
     <main class="max-w-lg mx-auto px-4 py-6">
       <!-- Nickname Section -->
       <div class="bg-white rounded-xl p-4 border border-[#E0E0E0] mb-4">
-        <div class="flex items-center justify-between">
+        <div class="flex items-center justify-bet+ween">
           <div class="flex items-center gap-3 flex-1">
             <div class="w-10 h-10 rounded-full bg-[#f4f2e5] flex items-center justify-center">
               <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -30,11 +30,12 @@
               v-if="isEditingName"
               v-model="newName"
               type="text"
-              class="flex-1 px-3 py-2 bg-[#FAFAFA] rounded-lg border border-[#E0E0E0] focus:outline-none focus:border-[#f4f2e5]"
+              class="flex-1 px-3 py-2 bg-[#FAFAFA] rounded-lg border border-[#E0E0E0] focus:outline-none focus:border-[#f4f2e5] mr-3"
               ref="nameInput"
             />
             <span v-else class="text-[#333333]">{{ userName }}</span>
           </div>
+          
           <div v-if="isEditingName" class="flex gap-2">
             <button
               @click="handleNameUpdate"

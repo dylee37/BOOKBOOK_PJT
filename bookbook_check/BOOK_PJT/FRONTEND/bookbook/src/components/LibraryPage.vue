@@ -42,16 +42,11 @@ import { computed, onMounted } from 'vue';
 import { useStore } from 'vuex';
 import BookCard from './BookCard.vue';
 
-// ⚠️ useRouter, useRoute 등을 여기서 절대 import 하지 마세요!
-
 const store = useStore();
-
-// Vuex 스토어 상태 연결
 const isLoggedIn = computed(() => !!store.state.accessToken);
 const books = computed(() => store.state.myLibrary);
 
 onMounted(() => {
-  // 컴포넌트가 로드될 때 로그를 찍어봅니다 (디버깅용)
   console.log("서재 페이지 마운트됨. 로그인 상태:", isLoggedIn.value);
   
   if (isLoggedIn.value) {

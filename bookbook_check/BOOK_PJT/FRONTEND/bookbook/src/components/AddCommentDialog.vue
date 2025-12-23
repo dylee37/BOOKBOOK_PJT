@@ -135,7 +135,6 @@ const isRecording = ref(false);
 const sttCompleted = ref(false);
 const sttError = ref(false);
 
-// MediaRecorder 관련 refs
 const mediaRecorder = ref(null);
 const audioChunks = ref([]);
 
@@ -164,29 +163,26 @@ const startRecording = async () => {
   try {
     const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
     
-    // 1. Recorder 생성
     const recorder = new MediaRecorder(stream);
     mediaRecorder.value = recorder;
     
-    // 2. 데이터 수집 이벤트
     recorder.ondataavailable = (event) => {
       if (event.data.size > 0) {
         audioChunks.value.push(event.data);
       }
     };
 
-    // 3. ⭐️ 녹음이 실제로 멈췄을 때 실행될 로직 ⭐️
     recorder.onstop = async () => {
       console.log("MediaRecorder가 실제로 멈췄습니다. STT를 시작합니다.");
       await stopRecordingAndProcessSTT();
       
-      // 마이크 사용 종료 (브라우저 마이크 아이콘 끄기)
+      // 마이크 종료
       stream.getTracks().forEach(track => track.stop());
     };
 
     // 4. 녹음 시작
     recorder.start();
-    isRecording.value = true; // 실제 시작 후 상태 변경
+    isRecording.value = true;
     console.log("녹음 시작됨...");
   } catch (error) {
     console.error("마이크 접근 오류:", error);
@@ -216,7 +212,6 @@ const toggleRecording = () => {
 };
 
 const stopRecordingAndProcessSTT = async () => {
-  // 녹음 종료 시 UI 상태 업데이트
   isRecording.value = false; 
 
   if (audioChunks.value.length === 0) {
@@ -261,9 +256,8 @@ const handleSubmit = () => {
     voice_choice: store.getters.selectedVoice
   });
 
-  // Reset
   commentText.value = '';
-  selectedRating.value = 5; // Default to 5
+  selectedRating.value = 5;
   commentType.value = 'text';
   isRecording.value = false;
   sttCompleted.value = false;

@@ -1,7 +1,7 @@
 <template>
   <div class="min-h-screen bg-background pb-20">
     
-    <header class="sticky top-0 bg-white border-b border-[#E0E0E0] z-10">
+    <header class="sticky top-0 bg-white border-b border-[#E0E0E0] z-[100]">
       <div class="max-w-lg mx-auto px-4 py-4">
         <div class="flex items-center justify-between">
           <div>

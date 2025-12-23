@@ -1,5 +1,5 @@
 <template>
-  <nav class="fixed bottom-0 left-0 right-0 bg-white border-t border-[#E0E0E0] z-20">
+  <nav class="fixed bottom-0 left-0 right-0 bg-white border-t border-[#E0E0E0] z-[100]">
     <div class="max-w-lg mx-auto px-4">
       <div class="flex items-center justify-around py-3">
         <button
