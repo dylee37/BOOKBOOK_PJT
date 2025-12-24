@@ -17,7 +17,23 @@
         <span class="text-[#333333] font-semibold" style="font-size: 0.875rem">
           {{ comment.user_name }}
         </span>
-        <StarRating :rating="comment.rating" :size="12" />
+        <div v-if="!isEditing">
+          <StarRating :rating="comment.rating" :size="12" />
+        </div>
+        <div v-else class="flex items-center gap-1">
+          <button 
+            v-for="star in 5" :key="star" 
+            @click="editRating = star"
+            class="focus:outline-none"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" 
+              :fill="star <= editRating ? '#FFD700' : 'none'" 
+              stroke="#FFD700" stroke-width="2" viewBox="0 0 24 24">
+              <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+            </svg>
+          </button>
+          <span class="text-[10px] text-[#999999] ml-1">{{ editRating }}점</span>
+        </div>
       </div>
 
       <div class="flex items-end" :class="{ 'flex-row-reverse': isMine }">
@@ -100,16 +116,18 @@ const selectedVoice = computed(() => store.getters.selectedVoice);
 
 const isEditing = ref(false);
 const editText = ref('');
+const editRating = ref(0);
 
 const startEdit = () => {
   editText.value = props.comment.content;
+  editRating.value = props.comment.rating;
   isEditing.value = true;
 };
 
 const handleUpdate = () => {
   if (!editText.value.trim()) return;
   // 부모 컴포넌트로 데이터 전달
-  emit('updateComment', { id: props.comment.id, content: editText.value });
+  emit('updateComment', { id: props.comment.id, content: editText.value, rating: editRating.value });
   isEditing.value = false;
 };
 

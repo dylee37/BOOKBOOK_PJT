@@ -387,21 +387,26 @@ const handleDeleteAccount = async () => {
   }
 };
 
-const handleUpdateComment = async ({ id, content }) => {
+const handleUpdateComment = async ({ id, content, rating }) => {
   if (!selectedBook.value) return;
 
   const token = localStorage.getItem('authToken');
   try {
     const response = await axios.patch(
       `http://127.0.0.1:8000/api/books/${selectedBook.value.id}/comments/${id}/`,
-      { content: content },
+      { content: content, rating: rating },
       { headers: { Authorization: `Token ${token}` } }
     );
 
-    // ⭐️ 서버 저장 후 현재 화면 데이터 즉시 갱신
     const commentIndex = selectedBook.value.comments.findIndex(c => c.id === id);
     if (commentIndex !== -1) {
       selectedBook.value.comments[commentIndex].content = response.data.content;
+      selectedBook.value.comments[commentIndex].rating = response.data.rating;
+    }
+    const newAverage = calculateLocalAverage(selectedBook.value.comments);
+    const bookIndex = books.value.findIndex(b => b.id === selectedBook.value.id);
+    if (bookIndex !== -1) {
+      books.value[bookIndex].rating = newAverage;
     }
     alert('댓글이 수정되었습니다.');
   } catch (error) {
