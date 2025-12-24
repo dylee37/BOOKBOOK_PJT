@@ -4,11 +4,11 @@
 
            shadow-[0_4px_12px_rgba(0,0,0,0.05)]
            
-           transition-all duration-[1000ms] cubic-bezier(0.175, 0.885, 0.32, 1.1)
+           transition-all duration-[800ms] cubic-bezier(0.175, 0.885, 0.32, 1.1)
            will-change-transform
-           hover:-translate-y-4
+           hover:-translate-y-2
 
-           hover:shadow-[0_40px_60px_-15px_rgba(0,0,0,0.12),0_20px_20px_-10px_rgba(0,0,0,0.08)]
+           hover:shadow-[0_18px_24px_-10px_rgba(0,0,0,0.15)]
            hover:border-[#f4f2e5]
            hover:z-50">
     
