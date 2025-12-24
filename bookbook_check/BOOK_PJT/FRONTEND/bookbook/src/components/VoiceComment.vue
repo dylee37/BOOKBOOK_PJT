@@ -21,16 +21,26 @@
       </div>
 
       <div class="flex items-end" :class="{ 'flex-row-reverse': isMine }">
-        <div :class="[
-            'rounded-2xl px-4 py-3 max-w-xs',
-            isMine ? 'bg-[#f4f2e5] rounded-br-sm' : 'bg-white border border-[#E0E0E0] rounded-bl-sm'
-          ]">
+        <div v-if="!isEditing" :class="['rounded-2xl px-4 py-3 max-w-xs', isMine ? 'bg-[#f4f2e5] rounded-br-sm' : 'bg-white border border-[#E0E0E0] rounded-bl-sm']">
             <p class="text-[#333333]" style="font-size: 0.875rem">
               {{ comment.content || (comment.is_voice ? '음성 메시지' : '내용 없음') }}
             </p>
           </div>
+        
+        <div v-else class="max-w-xs w-full">
+          <textarea 
+            v-model="editText"
+            class="w-full p-3 text-sm border border-[#e8e6d9] rounded-xl focus:outline-none bg-white"
+            rows="2"
+          ></textarea>
+          <div class="flex gap-2 mt-1" :class="isMine ? 'justify-end' : 'justify-start'">
+            <button @click="handleUpdate" class="text-[10px] text-blue-500 font-bold">저장</button>
+            <button @click="isEditing = false" class="text-[10px] text-gray-400">취소</button>
+          </div>
+        </div>
 
         <button 
+          v-if="!isEditing"
           @click="readComment(comment.content)"
           class="p-2 transition-colors self-end"
           :class="[
@@ -53,12 +63,9 @@
 
       <div class="flex items-center gap-3 mt-1" :class="isMine ? 'flex-row-reverse justify-start' : 'flex-row justify-start'">
         
-        <button v-if="isMyComment" 
-          @click="handleDeleteClick"
-          class="text-xs text-red-500 hover:text-red-700 transition-colors"
-        >
-          삭제
-        </button>
+        <div v-if="isMyComment && !isEditing" class="flex gap-2">
+          <button @click="startEdit" class="text-xs text-blue-500">수정</button> <button @click="handleDeleteClick" class="text-xs text-red-500">삭제</button>
+        </div>
         
         <span class="text-[#999999]" style="font-size: 0.75rem">
           {{ formatTime(comment.created_at) }}
@@ -85,11 +92,26 @@ const props = defineProps({
   }
 });
 
-const emit = defineEmits(['deleteComment']); 
+const emit = defineEmits(['deleteComment', 'updateComment']); 
 
 const store = useStore();
 const currentUserIdFromStore = computed(() => store.getters.currentUser?.id);
 const selectedVoice = computed(() => store.getters.selectedVoice);
+
+const isEditing = ref(false);
+const editText = ref('');
+
+const startEdit = () => {
+  editText.value = props.comment.content;
+  isEditing.value = true;
+};
+
+const handleUpdate = () => {
+  if (!editText.value.trim()) return;
+  // 부모 컴포넌트로 데이터 전달
+  emit('updateComment', { id: props.comment.id, content: editText.value });
+  isEditing.value = false;
+};
 
 const isMyComment = computed(() => {
     const currentId = props.currentUserId ? parseInt(props.currentUserId, 10) : null;
